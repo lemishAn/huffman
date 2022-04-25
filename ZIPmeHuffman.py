@@ -27,7 +27,6 @@ def encoding(top : Node, code = '') -> dict:
         byte2code.update(encoding(top.children[1],code + '1'))
         return byte2code
     else:
-        # print({top.byte: code})
         return {top.byte: code}
 
 
@@ -50,9 +49,7 @@ def huffman_encode(byte2prob : dict) -> dict:
 
 def substitution_enc(file : str, byte2code : dict) -> str:
     new_text = ''
-    # print(file)
     for old in file:
-        # print(hex(old))
         new_text += str(byte2code.get(hex(old)))
     return new_text
 
@@ -68,10 +65,6 @@ def write_in_file(byte2code : dict, text : str, path_file : str):
     last_byte = len(text) % 16
     if int(last_byte) == 0:
         last_byte = 16
-    # print('lentext', len(text))
-    # print('last_byte',last_byte)
-    lb = int(last_byte)
-    # print(text[-lb-1:])
     new_file.write((str(last_byte)+'\n').encode())
     for byte in byte2code:
         new_file.write((str(byte)+'\n').encode())
@@ -93,22 +86,18 @@ def substitution_dec(text : str, code2byte : dict):
     for key in code2byte.keys():
         if len(key) > len_key:
             len_key = len(key)
-    # print('tut')
     while text != '': 
         tmp = ''
         while (tmp not in code2byte.keys()) and (len(tmp) <= len_key):
             if text == '':
-                sys.exit('Archive is damaged (dict error1)')
+                sys.exit('Archive is damaged (dict error)')
             tmp += text[0]
             text = text[1:]
         if len(tmp) > len_key:
-            sys.exit('Archive is damaged (dict error2)')
-        # print(code2byte[tmp])
+            sys.exit('Archive is damaged (dict error)')
         if (len(code2byte[tmp]) == 3):
             code2byte[tmp] = code2byte[tmp][0:2] + "0" + code2byte[tmp][2]
-        # print(bytes.fromhex(code2byte[tmp][2:]))
         buf += bytes.fromhex(code2byte[tmp][2:])       
-    # print('tut2')
     return buf
 
 
@@ -120,11 +109,8 @@ def mode1(path_file):
     for i in file:
         list_byte.append(hex(i))
     byte2prob = collections.Counter(list_byte)
-    # print(byte2prob)
     byte2code = huffman_encode(byte2prob)
-    # print(byte2code)
     new_text = substitution_enc(file,byte2code)
-    # print(new_text, "!!!")
     write_in_file(byte2code, new_text, path_file)
 
 
@@ -134,10 +120,7 @@ def mode2(path_file):
     number_key = (number_key.decode())[:-1]
     last_byte = file_open.readline()
     last_byte = (last_byte.decode())[:-1]
-    # print(last_byte)
     if (not number_key.isdigit()) or (not last_byte.isdigit()):
-        # print(number_key)
-        # print(last_byte)
         sys.exit('Archive is damaged (incorrect archive format)')
     if (int(number_key) > 256) or (int(last_byte) > 16):
         sys.exit('Archive is damaged (incorrect archive format)')
@@ -149,7 +132,6 @@ def mode2(path_file):
         code = (code.decode())[:-1]
         pair = {byte: code}
         code2byte.update({code: byte})
-    # print(code2byte)
     text = file_open.read()
     file_open.close()
     txt = ''
@@ -158,17 +140,12 @@ def mode2(path_file):
         if len(text) == 2:
             res = str(bin(struct.unpack('<H',text1)[0])[2:])
             txt += (int(last_byte) - len(res))*'0' + res
-            # print(res)
-            # print((int(last_byte) - len(res))*'0' + res)
             break
-        #print(bin(text[1]))
         res = str(bin(struct.unpack('<H',text1)[0])[2:])
         if len(res) <= 15:
             res = (16 - len(res)) * '0' + res
         txt += res
-        # print(txt)
         text = text[2:]
-    # print(txt)
     new_text = substitution_dec(txt, code2byte)
     dote = path_file.rfind('.')
     if dote != -1:
@@ -191,7 +168,6 @@ while (flag == True):
             else:
                 file = input("Input path to file ")
                 mode1(file)
-            # print("encryption")
             flag = False
         elif mode == "dec":
             if len(sys.argv) > 2:
@@ -199,8 +175,7 @@ while (flag == True):
             else:
                 file = input("Input path to file ")
                 mode2(file)
-            # print("decryprion")
             flag = False
         else:
             mode = input("unknown command, repeat input ")
-print('---%s seconds ---' % (time.time() - start_time))
+print('___%s seconds ___' % (time.time() - start_time))
