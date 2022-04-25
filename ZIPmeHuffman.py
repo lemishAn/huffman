@@ -1,6 +1,7 @@
 import collections
 import struct
 import sys
+import time
 
 
 class Node:
@@ -65,12 +66,19 @@ def write_in_file(byte2code : dict, text : str, path_file : str):
     new_file = open(path_file, 'wb')
     new_file.write((str(len(byte2code))+'\n').encode())
     last_byte = len(text) % 16
+    if int(last_byte) == 0:
+        last_byte = 16
+    # print('lentext', len(text))
+    # print('last_byte',last_byte)
+    lb = int(last_byte)
+    # print(text[-lb-1:])
     new_file.write((str(last_byte)+'\n').encode())
     for byte in byte2code:
         new_file.write((str(byte)+'\n').encode())
         new_file.write((str(byte2code.get(byte))+'\n').encode())
     while text != '':
         if len(text) <= 16:
+            # print(text)
             new_file.write((struct.pack("<H", int(text[0:16],2))))
             break
         #print(struct.pack("<H", int(text[0:16],2)))  
@@ -90,11 +98,11 @@ def substitution_dec(text : str, code2byte : dict):
         tmp = ''
         while (tmp not in code2byte.keys()) and (len(tmp) <= len_key):
             if text == '':
-                sys.exit('Archive is damaged (dict error)')
+                sys.exit('Archive is damaged (dict error1)')
             tmp += text[0]
             text = text[1:]
         if len(tmp) > len_key:
-            sys.exit('Archive is damaged (dict error)')
+            sys.exit('Archive is damaged (dict error2)')
         # print(code2byte[tmp])
         if (len(code2byte[tmp]) == 3):
             code2byte[tmp] = code2byte[tmp][0:2] + "0" + code2byte[tmp][2]
@@ -126,12 +134,13 @@ def mode2(path_file):
     number_key = (number_key.decode())[:-1]
     last_byte = file_open.readline()
     last_byte = (last_byte.decode())[:-1]
+    # print(last_byte)
     if (not number_key.isdigit()) or (not last_byte.isdigit()):
         # print(number_key)
         # print(last_byte)
-        sys.exit('Archive is damaged (incorrect archive format1)')
+        sys.exit('Archive is damaged (incorrect archive format)')
     if (int(number_key) > 256) or (int(last_byte) > 16):
-        sys.exit('Archive is damaged (incorrect archive format2)')
+        sys.exit('Archive is damaged (incorrect archive format)')
     code2byte = {}
     for i in range(int(number_key)):
         byte = file_open.readline()
@@ -149,6 +158,8 @@ def mode2(path_file):
         if len(text) == 2:
             res = str(bin(struct.unpack('<H',text1)[0])[2:])
             txt += (int(last_byte) - len(res))*'0' + res
+            # print(res)
+            # print((int(last_byte) - len(res))*'0' + res)
             break
         #print(bin(text[1]))
         res = str(bin(struct.unpack('<H',text1)[0])[2:])
@@ -165,8 +176,8 @@ def mode2(path_file):
     new_file = open(path_file, 'wb')
     new_file.write(new_text)
 
+start_time = time.time()
 flag = True
-flag2 = True
 if len(sys.argv) > 1: 
     mode = sys.argv[1]
 else:
@@ -177,7 +188,6 @@ while (flag == True):
         if mode == "enc":
             if len(sys.argv) > 2:
                 mode1(sys.argv[2])
-                flag2 = False
             else:
                 file = input("Input path to file ")
                 mode1(file)
@@ -186,7 +196,6 @@ while (flag == True):
         elif mode == "dec":
             if len(sys.argv) > 2:
                 mode2(sys.argv[2])
-                flag2 = False
             else:
                 file = input("Input path to file ")
                 mode2(file)
@@ -194,3 +203,4 @@ while (flag == True):
             flag = False
         else:
             mode = input("unknown command, repeat input ")
+print('---%s seconds ---' % (time.time() - start_time))
